@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合成之诗</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FDF8F0;
+            --bg-secondary: #F5EDE0;
+            --bg-nav: #FAF4EA;
+            --text-primary: #2C2418;
+            --text-secondary: #6B5D4F;
+            --text-light: #9B8E7E;
+            --accent: #B8860B;
+            --accent-light: #D4A84B;
+            --accent-faint: rgba(184, 134, 11, 0.08);
+            --border: #E8DFD0;
+            --shadow: rgba(44, 36, 24, 0.06);
+            --font-size-base: 18px;
+            --content-width: 720px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: var(--font-size-base);
+            line-height: 1.9;
+            min-height: 100vh;
+        }
+
+        /* ===== 顶部导航栏 ===== */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: var(--bg-nav);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .top-bar-title {
+            font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+            font-size: 16px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .top-bar-title:hover {
+            color: var(--accent);
+        }
+
+        .top-bar-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .font-size-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        .font-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-family: 'Noto Serif SC', serif;
+            transition: all 0.2s;
+        }
+
+        .font-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .toc-toggle {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .toc-toggle:hover {
+            background: var(--accent-faint);
+            color: var(--accent);
+        }
+
+        /* ===== 侧边目录 ===== */
+        .toc-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 36, 24, 0.2);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .toc-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .toc-panel {
+            position: fixed;
+            top: 0;
+            right: -360px;
+            width: 340px;
+            max-width: 85vw;
+            height: 100vh;
+            background: var(--bg-nav);
+            z-index: 201;
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            border-left: 1px solid var(--border);
+            padding: 32px 0;
+        }
+
+        .toc-panel.active {
+            right: 0;
+        }
+
+        .toc-header {
+            padding: 0 28px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .toc-header h3 {
+            font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--text-primary);
+            letter-spacing: 3px;
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-list li a {
+            display: block;
+            padding: 10px 28px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            line-height: 1.6;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-list li a:hover {
+            color: var(--accent);
+            background: var(--accent-faint);
+            border-left-color: var(--accent);
+        }
+
+        .toc-list li.sub a {
+            padding-left: 44px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .toc-close {
+            position: absolute;
+            top: 28px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .toc-close:hover {
+            color: var(--text-primary);
+            background: var(--accent-faint);
+        }
+
+        /* ===== 封面区域 ===== */
+        .cover {
+            padding: 160px 24px 100px;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cover-ornament {
+            color: var(--accent-light);
+            font-size: 24px;
+            letter-spacing: 12px;
+            margin-bottom: 40px;
+            opacity: 0.6;
+        }
+
+        .cover h1 {
+            font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+            font-size: clamp(36px, 6vw, 52px);
+            font-weight: 400;
+            color: var(--text-primary);
+            letter-spacing: 8px;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .cover-subtitle {
+            font-size: 15px;
+            color: var(--text-light);
+            letter-spacing: 4px;
+            margin-bottom: 48px;
+        }
+
+        .cover-author {
+            font-size: 16px;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+        }
+
+        .cover-divider {
+            width: 60px;
+            height: 1px;
+            background: var(--accent-light);
+            margin: 40px auto;
+            opacity: 0.5;
+        }
+
+        .cover-note {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.8;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* ===== 正文区域 ===== */
+        .content {
+            max-width: var(--content-width);
+            margin: 0 auto;
+            padding: 0 24px 120px;
+        }
+
+        .chapter {
+            margin-bottom: 80px;
+            padding-top: 20px;
+        }
+
+        .chapter-title {
+            font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+            font-size: 1.5em;
+            font-weight: 400;
+            color: var(--text-primary);
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            line-height: 1.5;
+        }
+
+        .chapter-body {
+            text-align: justify;
+            text-indent: 2em;
+        }
+
+        .chapter-body p {
+            margin-bottom: 0.8em;
+        }
+
+        .chapter-separator {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--accent-light);
+            font-size: 18px;
+            letter-spacing: 12px;
+            opacity: 0.4;
+        }
+
+        /* ===== 页脚 ===== */
+        .footer {
+            text-align: center;
+            padding: 60px 24px 40px;
+            border-top: 1px solid var(--border);
+            max-width: var(--content-width);
+            margin: 0 auto;
+        }
+
+        .footer-ornament {
+            color: var(--accent-light);
+            font-size: 18px;
+            letter-spacing: 8px;
+            opacity: 0.4;
+            margin-bottom: 20px;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: var(--text-light);
+            letter-spacing: 2px;
+            line-height: 2;
+        }
+
+        /* ===== 回到顶部 ===== */
+        .back-to-top {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 44px;
+            height: 44px;
+            background: var(--bg-nav);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .back-to-top:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .top-bar {
+                padding: 0 16px;
+            }
+
+            .cover {
+                padding: 120px 20px 60px;
+            }
+
+            .content {
+                padding: 0 20px 80px;
+            }
+
+            .chapter-title {
+                font-size: 1.3em;
+            }
+
+            .toc-panel {
+                width: 300px;
+            }
+        }
+
+        /* ===== 滚动条美化 ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-light);
+        }
+
+        /* ===== 文字选中样式 ===== */
+        ::selection {
+            background: var(--accent-faint);
+            color: var(--accent);
+        }
+
+        /* ===== 加载动画 ===== */
+        .fade-in {
+            animation: fadeIn 0.8s ease both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航栏 -->
+    <nav class="top-bar">
+        <span class="top-bar-title" onclick="window.scrollTo({top:0})">合成之诗</span>
+        <div class="top-bar-controls">
+            <div class="font-size-control">
+                <button class="font-btn" onclick="changeFontSize(-1)" title="缩小字体">A-</button>
+                <span id="fontSizeLabel">18</span>
+                <button class="font-btn" onclick="changeFontSize(1)" title="放大字体">A+</button>
+            </div>
+            <button class="toc-toggle" onclick="toggleToc()" title="目录">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 侧边目录 -->
+    <div class="toc-overlay" onclick="toggleToc()"></div>
+    <div class="toc-panel">
+        <button class="toc-close" onclick="toggleToc()">×</button>
+        <div class="toc-header">
+            <h3>目 录</h3>
+        </div>
+        <ul class="toc-list">
+            <li><a href="#preface" onclick="toggleToc()">序</a></li>
+            <li><a href="#ch01" onclick="toggleToc()">第一章 她说是她写的</a></li>
+            <li><a href="#ch02" onclick="toggleToc()">第二章 空白的舌头</a></li>
+            <li><a href="#ch03" onclick="toggleToc()">第三章 她有那个义务</a></li>
+            <li><a href="#ch04" onclick="toggleToc()">第四章 失陷的左腕</a></li>
+            <li><a href="#ch05" onclick="toggleToc()">第五章 她说她能适应</a></li>
+            <li><a href="#ch06" onclick="toggleToc()">第六章 故事的开头</a></li>
+            <li class="sub"><a href="#ch07" onclick="toggleToc()">第七章 《蝰蛇谷》（一）</a></li>
+            <li><a href="#ch08" onclick="toggleToc()">第八章 她是个守旧的猪肉爱好者</a></li>
+            <li><a href="#ch09" onclick="toggleToc()">第九章 异常的我们</a></li>
+            <li class="sub"><a href="#ch10" onclick="toggleToc()">第十章 《蝰蛇谷》（二）</a></li>
+            <li><a href="#ch11" onclick="toggleToc()">第十一章 她没有男朋友</a></li>
+            <li><a href="#ch12" onclick="toggleToc()">第十二章 正常的路径</a></li>
+            <li class="sub"><a href="#ch13" onclick="toggleToc()">第十三章 《交叠的血盟》（一）</a></li>
+            <li><a href="#ch14" onclick="toggleToc()">第十四章 她不配定义爱情</a></li>
+            <li><a href="#ch15" onclick="toggleToc()">第十五章 疼痛的馈赠</a></li>
+            <li class="sub"><a href="#ch16" onclick="toggleToc()">第十六章 《交叠的血盟》（二）</a></li>
+            <li><a href="#ch17" onclick="toggleToc()">第十七章 她自己的战场</a></li>
+            <li><a href="#ch18" onclick="toggleToc()">第十八章 永别的重量</a></li>
+            <li class="sub"><a href="#ch19" onclick="toggleToc()">第十九章 《翻转迷宫》（一）</a></li>
+            <li><a href="#ch20" onclick="toggleToc()">第二十章 她不需要心理疏导</a></li>
+            <li><a href="#ch21" onclick="toggleToc()">第二十一章 友谊的酷刑</a></li>
+            <li class="sub"><a href="#ch22" onclick="toggleToc()">第二十二章 《翻转迷宫》（二）</a></li>
+            <li><a href="#ch23" onclick="toggleToc()">第二十三章 她也喜欢法律</a></li>
+            <li><a href="#ch24" onclick="toggleToc()">第二十四章 摇摆的决心</a></li>
+            <li class="sub"><a href="#ch25" onclick="toggleToc()">第二十五章 《死灵天平》（一）</a></li>
+            <li><a href="#ch26" onclick="toggleToc()">第二十六章 她召唤了命运</a></li>
+            <li><a href="#ch27" onclick="toggleToc()">第二十七章 黑暗的代理</a></li>
+            <li class="sub"><a href="#ch28" onclick="toggleToc()">第二十八章 《死灵天平》（二）</a></li>
+            <li><a href="#ch29" onclick="toggleToc()">第二十九章 她有什么愿望</a></li>
+            <li><a href="#ch30" onclick="toggleToc()">第三十章 真实的欢愉</a></li>
+            <li class="sub"><a href="#ch31" onclick="toggleToc()">第三十一章 《王的告白》（一）</a></li>
+            <li><a href="#ch32" onclick="toggleToc()">第三十二章 L'OISEAU QUI S'ÉLANCE</a></li>
+            <li class="sub"><a href="#ch33" onclick="toggleToc()">第三十三章 《王的告白》（二）</a></li>
+            <li><a href="#afterword" onclick="toggleToc()">后记</a></li>
+        </ul>
+    </div>
+
+    <!-- 封面 -->
+    <header class="cover fade-in">
+        <div class="cover-ornament">✦ ✦ ✦</div>
+        <h1>合成之诗</h1>
+        <p class="cover-subtitle">Synthetic Verses</p>
+        <p class="cover-author">张 玄</p>
+        <div class="cover-divider"></div>
+        <p class="cover-note">
+            初稿完成于 2025 年 9 月 7 日<br>
+            「我很高兴，你打开了这本书。」
+        </p>
+    </header>
+
+    <!-- 正文 -->
+    <main class="content">
+
+        <!-- ====== 序 ====== -->
+        <section class="chapter" id="preface">
+            <h2 class="chapter-title">序</h2>
+            <div class="chapter-body">
+                <!-- 在此粘贴「序」的内容，每个自然段用 <p>...</p> 包裹 -->
+                <p>（在此粘贴序的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第一章 ====== -->
+        <section class="chapter" id="ch01">
+            <h2 class="chapter-title">第一章 她说是她写的</h2>
+            <div class="chapter-body">
+                <!-- 在此粘贴第一章内容 -->
+                <p>（在此粘贴第一章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二章 ====== -->
+        <section class="chapter" id="ch02">
+            <h2 class="chapter-title">第二章 空白的舌头</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第三章 ====== -->
+        <section class="chapter" id="ch03">
+            <h2 class="chapter-title">第三章 她有那个义务</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第三章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第四章 ====== -->
+        <section class="chapter" id="ch04">
+            <h2 class="chapter-title">第四章 失陷的左腕</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第四章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第五章 ====== -->
+        <section class="chapter" id="ch05">
+            <h2 class="chapter-title">第五章 她说她能适应</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第五章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第六章 ====== -->
+        <section class="chapter" id="ch06">
+            <h2 class="chapter-title">第六章 故事的开头</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第六章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第七章 ====== -->
+        <section class="chapter" id="ch07">
+            <h2 class="chapter-title">第七章 《蝰蛇谷》（一）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第七章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第八章 ====== -->
+        <section class="chapter" id="ch08">
+            <h2 class="chapter-title">第八章 她是个守旧的猪肉爱好者</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第八章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第九章 ====== -->
+        <section class="chapter" id="ch09">
+            <h2 class="chapter-title">第九章 异常的我们</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第九章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十章 ====== -->
+        <section class="chapter" id="ch10">
+            <h2 class="chapter-title">第十章 《蝰蛇谷》（二）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十一章 ====== -->
+        <section class="chapter" id="ch11">
+            <h2 class="chapter-title">第十一章 她没有男朋友</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十一章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十二章 ====== -->
+        <section class="chapter" id="ch12">
+            <h2 class="chapter-title">第十二章 正常的路径</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十二章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十三章 ====== -->
+        <section class="chapter" id="ch13">
+            <h2 class="chapter-title">第十三章 《交叠的血盟》（一）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十三章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十四章 ====== -->
+        <section class="chapter" id="ch14">
+            <h2 class="chapter-title">第十四章 她不配定义爱情</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十四章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十五章 ====== -->
+        <section class="chapter" id="ch15">
+            <h2 class="chapter-title">第十五章 疼痛的馈赠</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十五章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十六章 ====== -->
+        <section class="chapter" id="ch16">
+            <h2 class="chapter-title">第十六章 《交叠的血盟》（二）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十六章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十七章 ====== -->
+        <section class="chapter" id="ch17">
+            <h2 class="chapter-title">第十七章 她自己的战场</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十七章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十八章 ====== -->
+        <section class="chapter" id="ch18">
+            <h2 class="chapter-title">第十八章 永别的重量</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十八章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第十九章 ====== -->
+        <section class="chapter" id="ch19">
+            <h2 class="chapter-title">第十九章 《翻转迷宫》（一）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第十九章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十章 ====== -->
+        <section class="chapter" id="ch20">
+            <h2 class="chapter-title">第二十章 她不需要心理疏导</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十一章 ====== -->
+        <section class="chapter" id="ch21">
+            <h2 class="chapter-title">第二十一章 友谊的酷刑</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十一章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十二章 ====== -->
+        <section class="chapter" id="ch22">
+            <h2 class="chapter-title">第二十二章 《翻转迷宫》（二）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十二章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十三章 ====== -->
+        <section class="chapter" id="ch23">
+            <h2 class="chapter-title">第二十三章 她也喜欢法律</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十三章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十四章 ====== -->
+        <section class="chapter" id="ch24">
+            <h2 class="chapter-title">第二十四章 摇摆的决心</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十四章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十五章 ====== -->
+        <section class="chapter" id="ch25">
+            <h2 class="chapter-title">第二十五章 《死灵天平》（一）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十五章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十六章 ====== -->
+        <section class="chapter" id="ch26">
+            <h2 class="chapter-title">第二十六章 她召唤了命运</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十六章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十七章 ====== -->
+        <section class="chapter" id="ch27">
+            <h2 class="chapter-title">第二十七章 黑暗的代理</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十七章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十八章 ====== -->
+        <section class="chapter" id="ch28">
+            <h2 class="chapter-title">第二十八章 《死灵天平》（二）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十八章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第二十九章 ====== -->
+        <section class="chapter" id="ch29">
+            <h2 class="chapter-title">第二十九章 她有什么愿望</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第二十九章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第三十章 ====== -->
+        <section class="chapter" id="ch30">
+            <h2 class="chapter-title">第三十章 真实的欢愉</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第三十章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第三十一章 ====== -->
+        <section class="chapter" id="ch31">
+            <h2 class="chapter-title">第三十一章 《王的告白》（一）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第三十一章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第三十二章 ====== -->
+        <section class="chapter" id="ch32">
+            <h2 class="chapter-title">第三十二章 L'OISEAU QUI S'ÉLANCE</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第三十二章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 第三十三章 ====== -->
+        <section class="chapter" id="ch33">
+            <h2 class="chapter-title">第三十三章 《王的告白》（二）</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴第三十三章的内容）</p>
+            </div>
+        </section>
+
+        <div class="chapter-separator">· · ·</div>
+
+        <!-- ====== 后记 ====== -->
+        <section class="chapter" id="afterword">
+            <h2 class="chapter-title">后记</h2>
+            <div class="chapter-body">
+                <p>（在此粘贴后记的内容）</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-ornament">✦ ✦ ✦</div>
+        <p class="footer-text">
+            合成之诗<br>
+            张玄 著<br>
+            2025
+        </p>
+    </footer>
+
+    <!-- 回到顶部 -->
+    <button class="back-to-top" onclick="window.scrollTo({top:0})" title="回到顶部">↑</button>
+
+    <script>
+        // 字体大小控制
+        let currentFontSize = 18;
+        const minSize = 14;
+        const maxSize = 26;
+
+        function changeFontSize(delta) {
+            currentFontSize = Math.max(minSize, Math.min(maxSize, currentFontSize + delta));
+            document.documentElement.style.setProperty('--font-size-base', currentFontSize + 'px');
+            document.getElementById('fontSizeLabel').textContent = currentFontSize;
+        }
+
+        // 目录面板
+        function toggleToc() {
+            document.querySelector('.toc-overlay').classList.toggle('active');
+            document.querySelector('.toc-panel').classList.toggle('active');
+        }
+
+        // 回到顶部按钮
+        window.addEventListener('scroll', () => {
+            const btn = document.querySelector('.back-to-top');
+            if (window.scrollY > 600) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        });
+
+        // ESC 关闭目录
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelector('.toc-overlay').classList.remove('active');
+                document.querySelector('.toc-panel').classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
