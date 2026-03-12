@@ -341,8 +341,8 @@ function resize() {
 function buildStars() {
     stars = [];
     // 洞口扁宽弧形，横向覆盖全宽，中心偏上
-    const cx = W * 0.53, cy = H * 0.20;
-    const rx = W * 0.42, ry = H * 0.28;
+    const cx = W * 0.50, cy = H * 0.22;
+    const rx = W * 0.36, ry = H * 0.24;
 
     // 边缘亮度渐隐：只控制亮度，不截断位置
     // 从椭圆60%处开始平滑衰减到边缘归零
@@ -350,7 +350,7 @@ function buildStars() {
         const dx = (x - cx) / rx;
         const dy = (y - cy) / ry;
         const d  = Math.sqrt(dx * dx + dy * dy);
-        const t  = Math.max(0, (d - 0.60) / 0.40);
+        const t  = Math.max(0, (d - 0.50) / 0.50);
         return 1 - t * t * (3 - 2 * t); // smoothstep
     }
 
@@ -452,7 +452,7 @@ requestAnimationFrame(draw);
 const IMG_W = 1536, IMG_H = 1024;
 
 // 书在原图中的位置（百分比）——调这四个数就是调书的位置和大小
-const BOOK = { x: 0.26, y: 0.73, w: 0.12, h: 0.15 };
+const BOOK = { x: 0.22, y: 0.635, w: 0.110, h: 0.138 };
 
 function positionBook() {
     const img = document.getElementById('cave-img');
