@@ -161,6 +161,151 @@
             border-color: rgba(230, 200, 120, 0.5);
         }
 
+        /* ─────────────────────────────────────────── */
+        /*   地面古典书  — 透视平放，封面朝上            */
+        /* ─────────────────────────────────────────── */
+        .book-floor {
+            position: absolute;
+            pointer-events: all;
+            cursor: pointer;
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform: perspective(700px) rotateX(52deg) rotateZ(-6deg);
+            transform-origin: center bottom;
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+
+        .book-floor:hover .book-cover {
+            filter: brightness(1.18) drop-shadow(0 0 18px rgba(190,140,50,0.50));
+            transform: perspective(700px) rotateX(44deg) rotateZ(-6deg);
+        }
+
+        .book-floor:hover .book-card-floor {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: all;
+        }
+
+        /* 封面主体 */
+        .cover-face {
+            width: 100%;
+            height: 100%;
+            border-radius: 3px 6px 6px 3px;
+            background:
+                radial-gradient(ellipse at 30% 25%, rgba(160,110,40,0.15) 0%, transparent 50%),
+                linear-gradient(135deg,
+                    #1a0e06 0%,
+                    #2d1a08 15%,
+                    #3a2210 35%,
+                    #2a1808 55%,
+                    #1e1008 75%,
+                    #120a04 100%
+                );
+            border: 1px solid rgba(180,130,45,0.55);
+            box-shadow:
+                inset 0 0 20px rgba(0,0,0,0.55),
+                inset 3px 0 8px rgba(0,0,0,0.40),
+                3px 6px 18px rgba(0,0,0,0.70);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10% 12%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 封面边框纹样 */
+        .cover-face::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border: 1px solid rgba(180,130,45,0.28);
+            border-radius: 2px;
+        }
+        .cover-face::after {
+            content: '';
+            position: absolute;
+            inset: 10px;
+            border: 1px solid rgba(180,130,45,0.13);
+            border-radius: 1px;
+        }
+
+        /* 封面书脊线 */
+        .cover-spine-line {
+            position: absolute;
+            left: 10%;
+            top: 0; bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom,
+                transparent,
+                rgba(160,115,40,0.35) 20%,
+                rgba(160,115,40,0.35) 80%,
+                transparent
+            );
+        }
+
+        .cover-title {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: clamp(11px, 1.4vw, 18px);
+            color: rgba(215,175,85,0.95);
+            letter-spacing: 5px;
+            text-align: center;
+            text-shadow: 0 0 12px rgba(190,145,50,0.60);
+            position: relative;
+            z-index: 2;
+            writing-mode: horizontal-tb;
+        }
+
+        .cover-deco {
+            font-size: clamp(8px, 0.9vw, 13px);
+            color: rgba(180,140,55,0.55);
+            letter-spacing: 3px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cover-author {
+            font-size: clamp(9px, 0.85vw, 12px);
+            color: rgba(175,138,68,0.68);
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 地面书的悬浮卡片（弹向上方） */
+        .book-card-floor {
+            position: absolute;
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 148px;
+            background: rgba(6,4,16,0.93);
+            border: 1px solid rgba(190,150,65,0.30);
+            border-radius: 8px;
+            padding: 14px 16px 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.26s ease, transform 0.26s ease;
+            backdrop-filter: blur(14px);
+            z-index: 100;
+            text-align: center;
+            white-space: normal;
+        }
+
+        .book-card-floor::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 50%;
+            transform: translateX(-50%);
+            border: 7px solid transparent;
+            border-top-color: rgba(190,150,65,0.30);
+        }
+
         /* ─────────────────────────────────── */
         /*   《合成之诗》书脊  — 深靛蓝调       */
         /* ─────────────────────────────────── */
@@ -231,30 +376,28 @@
         left / top / width / height 均为视口百分比
         如需微调：修改 style 里的数值即可
     -->
-    <div class="book-slot book-hezhi"
-         style="left:4.2%; top:28%; width:2.8%; height:14%;">
-        <div class="book-spine">
-            <span class="spine-deco spine-deco-top">✦</span>
-            <span class="spine-title">合成之诗</span>
-            <span class="spine-author">张&nbsp;玄</span>
-            <span class="spine-deco spine-deco-bottom">✦</span>
+    <!--
+        地面古典书——《合成之诗》
+        透视平放，封面朝上
+        left/top/width/height 均可微调
+    -->
+    <div class="book-floor"
+         style="left:36%; top:67%; width:14%; height:11%;">
+        <div class="book-cover">
+            <div class="cover-face">
+                <div class="cover-spine-line"></div>
+                <span class="cover-deco">・ &nbsp;⁂&nbsp; ・</span>
+                <span class="cover-title">合 成 之 诗</span>
+                <span class="cover-author">张 &nbsp;玄 &nbsp;著</span>
+                <span class="cover-deco">・ &nbsp;⁂&nbsp; ・</span>
+            </div>
         </div>
-        <div class="book-card">
+        <div class="book-card-floor">
             <div class="card-title">《合成之诗》</div>
             <div class="card-year">2025</div>
-            <a class="card-link" href="novel.html">阅 读</a>
+            <a class="card-link" href="novel.html">阅 &nbsp;读</a>
         </div>
     </div>
-
-    <!--
-        未来的书（占位，暂隐藏）
-        需要时取消注释，填入信息
-    -->
-    <!--
-    <div class="book-slot book-coming"
-         style="left:14%; top:28%; width:2.5%; height:12%;">
-    </div>
-    -->
 
 </div>
 
