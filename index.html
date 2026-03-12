@@ -1,48 +1,485 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狐狸的书架 🦊</title>
+    <title>张玄 · 著作</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: white;
-            font-family: 'Times New Roman', serif;
-            color: #333;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #08050F;
+            font-family: 'Noto Serif SC', 'STSong', serif;
+            cursor: default;
+            user-select: none;
         }
-        header {
+
+        /* ── 底图层 ── */
+        .cave-bg {
+            position: fixed;
+            inset: 0;
+            background: url('images/cave-bg.png') center top / cover no-repeat;
+            z-index: 1;
+        }
+
+        /* ── 星空 Canvas（覆盖穹顶暗区） ── */
+        #stars {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* ── 蜡烛火焰层 ── */
+        .candles-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* 单根蜡烛火焰 */
+        .flame {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .flame-inner {
+            position: relative;
+            width: 10px;
+            height: 22px;
+            margin: 0 auto;
+        }
+
+        /* 火焰主体 — 用 clip-path 做泪滴形 */
+        .flame-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 22px;
+            background: radial-gradient(ellipse at 50% 85%,
+                #fff7e0 0%,
+                #ffe066 20%,
+                #ff9a00 55%,
+                #cc4400 80%,
+                transparent 100%
+            );
+            border-radius: 50% 50% 20% 20% / 60% 60% 20% 20%;
+            animation: flicker 1.8s ease-in-out infinite;
+            transform-origin: bottom center;
+            filter: blur(0.5px);
+        }
+
+        /* 火焰光晕 */
+        .flame-glow {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 28px;
+            background: radial-gradient(circle,
+                rgba(255, 160, 40, 0.55) 0%,
+                rgba(255, 100, 10, 0.20) 45%,
+                transparent 70%
+            );
+            border-radius: 50%;
+            animation: glow-pulse 1.8s ease-in-out infinite;
+        }
+
+        /* 地面光斑 */
+        .flame-pool {
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 48px;
+            height: 10px;
+            background: radial-gradient(ellipse,
+                rgba(200, 100, 20, 0.28) 0%,
+                transparent 70%
+            );
+            border-radius: 50%;
+            animation: glow-pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes flicker {
+            0%   { transform: translateX(-50%) scaleX(1)    rotate(-1deg); opacity: 1;    }
+            20%  { transform: translateX(-50%) scaleX(0.88) rotate(1.5deg); opacity: 0.92; }
+            40%  { transform: translateX(-50%) scaleX(1.05) rotate(-0.8deg); opacity: 1;   }
+            60%  { transform: translateX(-50%) scaleX(0.92) rotate(1deg);   opacity: 0.95; }
+            80%  { transform: translateX(-50%) scaleX(1.02) rotate(-1.2deg); opacity: 1;   }
+            100% { transform: translateX(-50%) scaleX(1)    rotate(-1deg); opacity: 1;    }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
+            50%       { opacity: 0.5; transform: translateX(-50%) scale(0.85); }
+        }
+
+        /* ── 书层 ── */
+        .books-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* 单本书的交互区 */
+        .book-slot {
+            position: absolute;
+            pointer-events: all;
+            cursor: pointer;
+        }
+
+        /* 书脊 */
+        .book-spine {
+            width: 100%;
+            height: 100%;
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            position: relative;
+            overflow: hidden;
+            transition: filter 0.3s ease;
+        }
+
+        .book-slot:hover .book-spine {
+            filter: brightness(1.22) drop-shadow(0 0 14px rgba(200,160,60,0.55));
+        }
+
+        .book-slot:hover .book-card {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: all;
+        }
+
+        .spine-title {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-family: 'ZCOOL XiaoWei', serif;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .spine-author {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 2px;
+            opacity: 0.65;
+            position: relative;
+            z-index: 2;
+        }
+
+        .spine-deco {
+            position: absolute;
+            font-size: 7px;
+            z-index: 2;
+        }
+        .spine-deco-top    { top: 10px; }
+        .spine-deco-bottom { bottom: 10px; }
+
+        /* 悬浮卡片 */
+        .book-card {
+            position: absolute;
+            bottom: calc(100% + 14px);
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            width: 152px;
+            background: rgba(6, 4, 16, 0.92);
+            border: 1px solid rgba(190, 150, 65, 0.30);
+            border-radius: 8px;
+            padding: 14px 16px 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.26s ease, transform 0.26s ease;
+            backdrop-filter: blur(14px);
+            z-index: 100;
             text-align: center;
-            margin-bottom: 40px;
+            white-space: normal;
         }
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: #666;
+
+        .book-card::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 50%;
+            transform: translateX(-50%);
+            border: 7px solid transparent;
+            border-top-color: rgba(190, 150, 65, 0.30);
         }
-        .works {
-            margin-top: 20px;
+
+        .card-title {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 15px;
+            color: rgba(220, 185, 100, 0.98);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
         }
-        .works li {
-            margin: 5px 0;
+
+        .card-year {
+            font-size: 11px;
+            color: rgba(160, 140, 100, 0.6);
+            letter-spacing: 3px;
+            margin-bottom: 8px;
         }
+
+        .card-link {
+            display: inline-block;
+            text-decoration: none;
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: rgba(200, 165, 80, 0.85);
+            border-bottom: 1px solid rgba(200, 165, 80, 0.28);
+            padding-bottom: 2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .card-link:hover {
+            color: rgba(230, 200, 120, 1);
+            border-color: rgba(230, 200, 120, 0.5);
+        }
+
+        /* ─────────────────────────────────── */
+        /*   《合成之诗》书脊  — 深靛蓝调       */
+        /* ─────────────────────────────────── */
+        .book-hezhi .book-spine {
+            background:
+                radial-gradient(circle at 35% 30%, rgba(140,110,240,0.12) 0%, transparent 45%),
+                radial-gradient(circle at 65% 70%, rgba(70,90,210,0.10) 0%, transparent 45%),
+                linear-gradient(170deg,
+                    #0F1E52 0%, #12224E 18%, #0C1840 40%,
+                    #0F1E50 60%, #0B1638 78%, #111F4E 100%
+                );
+            border-left: 2px solid rgba(190, 150, 60, 0.50);
+            box-shadow:
+                inset 3px 0 10px rgba(150, 110, 35, 0.10),
+                inset -1px 0 5px rgba(0, 0, 25, 0.45);
+        }
+
+        .book-hezhi .book-spine::before {
+            content: '';
+            position: absolute;
+            inset: 8px 5px;
+            border: 1px solid rgba(190, 150, 60, 0.18);
+            border-radius: 1px;
+        }
+
+        .book-hezhi .spine-title {
+            font-size: 13px;
+            color: rgba(215, 178, 95, 0.96);
+            text-shadow: 0 0 10px rgba(190, 145, 55, 0.50);
+        }
+
+        .book-hezhi .spine-author {
+            font-size: 9px;
+            color: rgba(175, 148, 88, 0.68);
+        }
+
+        .book-hezhi .spine-deco {
+            color: rgba(190, 155, 65, 0.50);
+        }
+
+        /* ── 顶部署名 ── */
+        .site-title {
+            position: fixed;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: 13px;
+            letter-spacing: 10px;
+            color: rgba(210, 175, 95, 0.58);
+            text-shadow: 0 0 20px rgba(180, 140, 60, 0.30);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* ── 入场动画 ── */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .cave-bg  { animation: fadeIn 1.6s ease both; }
+        .site-title { animation: fadeIn 2.0s ease 0.6s both; }
+        .books-layer { animation: fadeIn 2.2s ease 1.0s both; }
+        .candles-layer { animation: fadeIn 2.5s ease 1.4s both; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>小狐狸的书架 🦊</h1>
-    </header>
-    <section class="works">
-        <h2>作品目录</h2>
-        <ul>
-            <li><a href="novel.html">《合成之诗》</a></li>
-        </ul>
-    </section>
-    <footer>
-        <p>Built with 🧡</p>
-    </footer>
+
+<!-- 底图 -->
+<div class="cave-bg"></div>
+
+<!-- 星空 Canvas -->
+<canvas id="stars"></canvas>
+
+<!-- 蜡烛火焰
+     坐标对应图片中蜡烛烛台位置
+     left/top 是百分比，基于视口 -->
+<div class="candles-layer">
+    <!-- 左侧书架中层蜡烛 -->
+    <div class="flame" style="left:27.5%; top:54%;">
+        <div class="flame-inner">
+            <div class="flame-glow"></div>
+            <div class="flame-body"></div>
+            <div class="flame-pool"></div>
+        </div>
+    </div>
+    <!-- 右侧书架上方蜡烛 -->
+    <div class="flame" style="left:84.5%; top:28%;">
+        <div class="flame-inner">
+            <div class="flame-glow"></div>
+            <div class="flame-body"></div>
+            <div class="flame-pool"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 书层 -->
+<div class="books-layer">
+
+    <!--
+        《合成之诗》
+        定位在左侧原木书架第一层
+        left / top / width / height 均为视口百分比
+        如需微调：修改 style 里的数值即可
+    -->
+    <div class="book-slot book-hezhi"
+         style="left:9.5%; top:28%; width:3.0%; height:13%;">
+        <div class="book-spine">
+            <span class="spine-deco spine-deco-top">✦</span>
+            <span class="spine-title">合成之诗</span>
+            <span class="spine-author">张&nbsp;玄</span>
+            <span class="spine-deco spine-deco-bottom">✦</span>
+        </div>
+        <div class="book-card">
+            <div class="card-title">《合成之诗》</div>
+            <div class="card-year">2025</div>
+            <a class="card-link" href="novel.html">阅 读</a>
+        </div>
+    </div>
+
+    <!--
+        未来的书（占位，暂隐藏）
+        需要时取消注释，填入信息
+    -->
+    <!--
+    <div class="book-slot book-coming"
+         style="left:14%; top:28%; width:2.5%; height:12%;">
+    </div>
+    -->
+
+</div>
+
+<!-- 顶部署名 -->
+<p class="site-title">张 &nbsp;玄 &nbsp;· &nbsp;著 &nbsp;作</p>
+
+<script>
+/* ══════════════════════════════════════
+   星空生成器
+   只在穹顶暗区（大约 x:22-76%, y:0-62%）散布星星
+   ══════════════════════════════════════ */
+const canvas = document.getElementById('stars');
+const ctx    = canvas.getContext('2d');
+
+let W, H, stars = [];
+
+function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    buildStars();
+}
+
+function buildStars() {
+    stars = [];
+    // 穹顶椭圆区域边界（视口百分比）
+    const cx = W * 0.50, cy = H * 0.28;
+    const rx = W * 0.26, ry = H * 0.28;
+
+    // 普通星
+    for (let i = 0; i < 380; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()); // 均匀分布在椭圆内
+        stars.push({
+            x: cx + rx * r * Math.cos(a),
+            y: cy + ry * r * Math.sin(a),
+            radius: Math.random() * 1.2 + 0.15,
+            base:   Math.random() * 0.60 + 0.15,
+            speed:  Math.random() * 0.005 + 0.002,
+            phase:  Math.random() * Math.PI * 2,
+            color:  starColor(),
+        });
+    }
+
+    // 亮星（少量，带光晕）
+    for (let i = 0; i < 20; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * 0.82;
+        stars.push({
+            x: cx + rx * r * Math.cos(a),
+            y: cy + ry * r * Math.sin(a),
+            radius: Math.random() * 1.6 + 1.0,
+            base:   Math.random() * 0.35 + 0.60,
+            speed:  Math.random() * 0.003 + 0.001,
+            phase:  Math.random() * Math.PI * 2,
+            color:  starColor(),
+            bright: true,
+        });
+    }
+}
+
+function starColor() {
+    const palette = [
+        [225,220,255], [255,248,230],
+        [205,225,255], [255,232,205], [218,205,255],
+    ];
+    return palette[Math.floor(Math.random() * palette.length)];
+}
+
+function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+
+    stars.forEach(s => {
+        const tw    = Math.sin(t * s.speed + s.phase) * 0.28 + 0.72;
+        const alpha = s.base * tw;
+        const [r, g, b] = s.color;
+
+        if (s.bright) {
+            const gw = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.radius * 5);
+            gw.addColorStop(0,   `rgba(${r},${g},${b},${alpha * 0.55})`);
+            gw.addColorStop(0.4, `rgba(${r},${g},${b},${alpha * 0.12})`);
+            gw.addColorStop(1,   'transparent');
+            ctx.fillStyle = gw;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.radius * 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+}
+
+resize();
+window.addEventListener('resize', resize);
+requestAnimationFrame(draw);
+</script>
 </body>
 </html>
