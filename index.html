@@ -295,8 +295,7 @@
         透视平放，封面朝上
         left/top/width/height 均可微调
     -->
-    <div class="book-floor"
-         style="left:16%; top:75%; width:13%; height:16%;">
+    <div class="book-floor" id="book-hezhi">
         <img class="book-img" src="images/book-hezhi.png" alt="合成之诗" />
         <div class="book-card-floor">
             <div class="card-title">《合成之诗》</div>
@@ -430,6 +429,34 @@ function draw(t) {
 resize();
 window.addEventListener('resize', resize);
 requestAnimationFrame(draw);
+
+/* ══════════════════════════════════════
+   书本定位：跟随背景图实际渲染位置
+   背景图原始尺寸 1536×1024
+   cover + center top 模式
+   ══════════════════════════════════════ */
+const IMG_W = 1536, IMG_H = 1024;
+
+// 书在原图中的位置（百分比），调这四个数等于调书的位置和大小
+const BOOK = { x: 0.115, y: 0.72, w: 0.175, h: 0.22 };
+
+function positionBook() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const scale = Math.max(vw / IMG_W, vh / IMG_H);
+    const rw = IMG_W * scale, rh = IMG_H * scale;
+    // cover + center top: 水平居中，顶部对齐
+    const ox = (vw - rw) / 2, oy = 0;
+
+    const el = document.getElementById('book-hezhi');
+    if (!el) return;
+    el.style.left   = (ox + BOOK.x * rw) + 'px';
+    el.style.top    = (oy + BOOK.y * rh) + 'px';
+    el.style.width  = (BOOK.w * rw) + 'px';
+    el.style.height = (BOOK.h * rh) + 'px';
+}
+
+positionBook();
+window.addEventListener('resize', positionBook);
 </script>
 </body>
 </html>
