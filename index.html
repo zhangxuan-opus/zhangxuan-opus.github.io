@@ -35,95 +35,6 @@
             pointer-events: none;
         }
 
-        /* ── 蜡烛火焰层 ── */
-        .candles-layer {
-            position: fixed;
-            inset: 0;
-            z-index: 3;
-            pointer-events: none;
-        }
-
-        /* 单根蜡烛火焰 */
-        .flame {
-            position: absolute;
-            transform: translateX(-50%);
-        }
-
-        .flame-inner {
-            position: relative;
-            width: 10px;
-            height: 22px;
-            margin: 0 auto;
-        }
-
-        /* 火焰主体 — 用 clip-path 做泪滴形 */
-        .flame-body {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 10px;
-            height: 22px;
-            background: radial-gradient(ellipse at 50% 85%,
-                #fff7e0 0%,
-                #ffe066 20%,
-                #ff9a00 55%,
-                #cc4400 80%,
-                transparent 100%
-            );
-            border-radius: 50% 50% 20% 20% / 60% 60% 20% 20%;
-            animation: flicker 1.8s ease-in-out infinite;
-            transform-origin: bottom center;
-            filter: blur(0.5px);
-        }
-
-        /* 火焰光晕 */
-        .flame-glow {
-            position: absolute;
-            bottom: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 28px;
-            height: 28px;
-            background: radial-gradient(circle,
-                rgba(255, 160, 40, 0.55) 0%,
-                rgba(255, 100, 10, 0.20) 45%,
-                transparent 70%
-            );
-            border-radius: 50%;
-            animation: glow-pulse 1.8s ease-in-out infinite;
-        }
-
-        /* 地面光斑 */
-        .flame-pool {
-            position: absolute;
-            bottom: -14px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 48px;
-            height: 10px;
-            background: radial-gradient(ellipse,
-                rgba(200, 100, 20, 0.28) 0%,
-                transparent 70%
-            );
-            border-radius: 50%;
-            animation: glow-pulse 1.8s ease-in-out infinite;
-        }
-
-        @keyframes flicker {
-            0%   { transform: translateX(-50%) scaleX(1)    rotate(-1deg); opacity: 1;    }
-            20%  { transform: translateX(-50%) scaleX(0.88) rotate(1.5deg); opacity: 0.92; }
-            40%  { transform: translateX(-50%) scaleX(1.05) rotate(-0.8deg); opacity: 1;   }
-            60%  { transform: translateX(-50%) scaleX(0.92) rotate(1deg);   opacity: 0.95; }
-            80%  { transform: translateX(-50%) scaleX(1.02) rotate(-1.2deg); opacity: 1;   }
-            100% { transform: translateX(-50%) scaleX(1)    rotate(-1deg); opacity: 1;    }
-        }
-
-        @keyframes glow-pulse {
-            0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
-            50%       { opacity: 0.5; transform: translateX(-50%) scale(0.85); }
-        }
-
         /* ── 书层 ── */
         .books-layer {
             position: fixed;
@@ -290,21 +201,7 @@
             color: rgba(190, 155, 65, 0.50);
         }
 
-        /* ── 顶部署名 ── */
-        .site-title {
-            position: fixed;
-            top: 28px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            font-family: 'ZCOOL XiaoWei', serif;
-            font-size: 13px;
-            letter-spacing: 10px;
-            color: rgba(210, 175, 95, 0.58);
-            text-shadow: 0 0 20px rgba(180, 140, 60, 0.30);
-            white-space: nowrap;
-            pointer-events: none;
-        }
+
 
         /* ── 入场动画 ── */
         @keyframes fadeIn {
@@ -312,10 +209,9 @@
             to   { opacity: 1; }
         }
 
-        .cave-bg  { animation: fadeIn 1.6s ease both; }
-        .site-title { animation: fadeIn 2.0s ease 0.6s both; }
+        .cave-bg     { animation: fadeIn 1.6s ease both; }
+        .site-title  { animation: fadeIn 2.0s ease 0.6s both; }
         .books-layer { animation: fadeIn 2.2s ease 1.0s both; }
-        .candles-layer { animation: fadeIn 2.5s ease 1.4s both; }
     </style>
 </head>
 <body>
@@ -325,28 +221,6 @@
 
 <!-- 星空 Canvas -->
 <canvas id="stars"></canvas>
-
-<!-- 蜡烛火焰
-     坐标对应图片中蜡烛烛台位置
-     left/top 是百分比，基于视口 -->
-<div class="candles-layer">
-    <!-- 左侧书架中层蜡烛 -->
-    <div class="flame" style="left:27.5%; top:54%;">
-        <div class="flame-inner">
-            <div class="flame-glow"></div>
-            <div class="flame-body"></div>
-            <div class="flame-pool"></div>
-        </div>
-    </div>
-    <!-- 右侧书架上方蜡烛 -->
-    <div class="flame" style="left:84.5%; top:28%;">
-        <div class="flame-inner">
-            <div class="flame-glow"></div>
-            <div class="flame-body"></div>
-            <div class="flame-pool"></div>
-        </div>
-    </div>
-</div>
 
 <!-- 书层 -->
 <div class="books-layer">
@@ -358,7 +232,7 @@
         如需微调：修改 style 里的数值即可
     -->
     <div class="book-slot book-hezhi"
-         style="left:9.5%; top:28%; width:3.0%; height:13%;">
+         style="left:4.2%; top:28%; width:2.8%; height:14%;">
         <div class="book-spine">
             <span class="spine-deco spine-deco-top">✦</span>
             <span class="spine-title">合成之诗</span>
@@ -384,8 +258,7 @@
 
 </div>
 
-<!-- 顶部署名 -->
-<p class="site-title">张 &nbsp;玄 &nbsp;· &nbsp;著 &nbsp;作</p>
+
 
 <script>
 /* ══════════════════════════════════════
