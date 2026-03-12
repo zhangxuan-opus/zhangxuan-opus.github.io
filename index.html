@@ -23,8 +23,16 @@
         .cave-bg {
             position: fixed;
             inset: 0;
-            background: url('images/cave-bg.png') center top / cover no-repeat;
             z-index: 1;
+            overflow: hidden;
+        }
+        .cave-bg img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
         }
 
         /* ── 星空 Canvas（覆盖穹顶暗区） ── */
@@ -276,7 +284,9 @@
 <body>
 
 <!-- 底图 -->
-<div class="cave-bg"></div>
+<div class="cave-bg">
+    <img id="cave-img" src="images/cave-bg.png" alt="">
+</div>
 
 <!-- 星空 Canvas -->
 <canvas id="stars"></canvas>
@@ -437,25 +447,30 @@ requestAnimationFrame(draw);
    ══════════════════════════════════════ */
 const IMG_W = 1536, IMG_H = 1024;
 
-// 书在原图中的位置（百分比），调这四个数等于调书的位置和大小
-const BOOK = { x: 0.115, y: 0.72, w: 0.175, h: 0.22 };
+// 书在原图中的位置（百分比）——调这四个数就是调书的位置和大小
+const BOOK = { x: 0.26, y: 0.73, w: 0.12, h: 0.15 };
 
 function positionBook() {
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const scale = Math.max(vw / IMG_W, vh / IMG_H);
-    const rw = IMG_W * scale, rh = IMG_H * scale;
-    // cover + center top: 水平居中，顶部对齐
-    const ox = (vw - rw) / 2, oy = 0;
+    const img = document.getElementById('cave-img');
+    const el  = document.getElementById('book-hezhi');
+    if (!img || !el) return;
 
-    const el = document.getElementById('book-hezhi');
-    if (!el) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const scale = Math.max(vw / IMG_W, vh / IMG_H); // cover: 取大，填满屏幕无黑边
+    const rw = IMG_W * scale, rh = IMG_H * scale;
+    const ox = (vw - rw) / 2;
+    const oy = (vh - rh) / 2;
+
     el.style.left   = (ox + BOOK.x * rw) + 'px';
     el.style.top    = (oy + BOOK.y * rh) + 'px';
     el.style.width  = (BOOK.w * rw) + 'px';
     el.style.height = (BOOK.h * rh) + 'px';
 }
 
-positionBook();
+// 图片加载完再定位，避免就算失误
+const caveImg = document.getElementById('cave-img');
+if (caveImg.complete) positionBook();
+else caveImg.addEventListener('load', positionBook);
 window.addEventListener('resize', positionBook);
 </script>
 </body>
