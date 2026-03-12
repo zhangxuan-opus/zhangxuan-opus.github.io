@@ -459,16 +459,22 @@ function positionBook() {
     const el  = document.getElementById('book-hezhi');
     if (!img || !el) return;
 
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const scale = Math.max(vw / IMG_W, vh / IMG_H); // cover: 取大，填满屏幕无黑边
-    const rw = IMG_W * scale, rh = IMG_H * scale;
-    const ox = (vw - rw) / 2;
-    const oy = (vh - rh) / 2;
+    // 直接读CSS实际渲染的容器尺寸，不手动模拟cover计算
+    const rect = img.getBoundingClientRect();
+    const nw = img.naturalWidth  || IMG_W;
+    const nh = img.naturalHeight || IMG_H;
 
-    el.style.left   = (ox + BOOK.x * rw) + 'px';
-    el.style.top    = (oy + BOOK.y * rh) + 'px';
-    el.style.width  = (BOOK.w * rw) + 'px';
-    el.style.height = (BOOK.h * rh) + 'px';
+    // cover模式：取较大缩放，图片内容可能超出容器
+    const scale  = Math.max(rect.width / nw, rect.height / nh);
+    const rendW  = nw * scale;
+    const rendH  = nh * scale;
+    const ox     = rect.left + (rect.width  - rendW) / 2;
+    const oy     = rect.top  + (rect.height - rendH) / 2;
+
+    el.style.left   = (ox + BOOK.x * rendW) + 'px';
+    el.style.top    = (oy + BOOK.y * rendH) + 'px';
+    el.style.width  = (BOOK.w * rendW) + 'px';
+    el.style.height = (BOOK.h * rendH) + 'px';
 }
 
 // 图片加载完再定位，避免就算失误
