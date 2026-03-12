@@ -10,9 +10,13 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html {
+            min-height: calc(100vw * 0.667); /* 保持3:2比例，宽屏不裁底部 */
+        }
+
         html, body {
             width: 100%; height: 100%;
-            overflow: hidden;
+            overflow: auto;
             background: #08050F;
             font-family: 'Noto Serif SC', 'STSong', serif;
             cursor: default;
