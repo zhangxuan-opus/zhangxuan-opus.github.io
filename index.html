@@ -341,13 +341,14 @@ function resize() {
 function buildStars() {
     stars = [];
     // 洞口扁宽弧形，横向覆盖全宽，中心偏上
-    const cx = W * 0.50, cy = H * 0.22;
+    const cx = W * 0.54, cy = H * 0.22;
     const rx = W * 0.36, ry = H * 0.24;
 
     // 边缘亮度渐隐：只控制亮度，不截断位置
     // 从椭圆60%处开始平滑衰减到边缘归零
     function edgeFade(x, y) {
-        const dx = (x - cx) / rx;
+        const rxEff = x > cx ? rx * 0.82 : rx; // 右侧单独收紧
+        const dx = (x - cx) / rxEff;
         const dy = (y - cy) / ry;
         const d  = Math.sqrt(dx * dx + dy * dy);
         const t  = Math.max(0, (d - 0.50) / 0.50);
@@ -365,7 +366,7 @@ function buildStars() {
         stars.push({
             x, y,
             radius: Math.random() * 1.0 + 0.12,
-            base:   (Math.random() * 0.55 + 0.30) * fade,
+            base:   (Math.random() * 0.55 + 0.58) * fade,
             speed:  Math.random() * 0.005 + 0.002,
             phase:  Math.random() * Math.PI * 2,
             color:  starColor(),
@@ -382,8 +383,26 @@ function buildStars() {
         stars.push({
             x, y,
             radius: Math.random() * 1.4 + 1.0,
-            base:   (Math.random() * 0.30 + 0.60) * fade,
+            base:   (Math.random() * 0.20 + 0.85) * fade,
             speed:  Math.random() * 0.003 + 0.001,
+            phase:  Math.random() * Math.PI * 2,
+            color:  starColor(),
+            bright: true,
+        });
+    }
+
+    // 特大亮星：3颗，随机分布在内50%区域，比普通亮星更大更亮
+    for (let i = 0; i < 3; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * 0.50;
+        const x = cx + rx * r * Math.cos(a);
+        const y = cy + ry * r * Math.sin(a);
+        const fade = edgeFade(x, y);
+        stars.push({
+            x, y,
+            radius: Math.random() * 1.0 + 2.8,
+            base:   (Math.random() * 0.10 + 0.90) * fade,
+            speed:  Math.random() * 0.002 + 0.001,
             phase:  Math.random() * Math.PI * 2,
             color:  starColor(),
             bright: true,
@@ -452,7 +471,7 @@ requestAnimationFrame(draw);
 const IMG_W = 1536, IMG_H = 1024;
 
 // 书在原图中的位置（百分比）——调这四个数就是调书的位置和大小
-const BOOK = { x: 0.22, y: 0.635, w: 0.110, h: 0.138 };
+const BOOK = { x: 0.22, y: 0.665, w: 0.110, h: 0.138 };
 
 function positionBook() {
     const img = document.getElementById('cave-img');
