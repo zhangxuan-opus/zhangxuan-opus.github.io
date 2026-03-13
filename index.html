@@ -274,6 +274,124 @@
 
 
 
+        /* ── 桌上书点击区 ── */
+        .desk-book-zone {
+            position: absolute;
+            pointer-events: all;
+            cursor: pointer;
+            z-index: 5;
+
+        }
+
+        /* ── 日志弹窗 ── */
+        #journal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(4, 2, 12, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            transition: background 0.4s ease;
+        }
+
+        #journal-overlay.open {
+            background: rgba(4, 2, 12, 0.82);
+            pointer-events: all;
+        }
+
+        #journal-book {
+            position: relative;
+            width: min(82vw, 900px);
+            aspect-ratio: 3/2;
+            opacity: 0;
+            transform: scale(0.88) translateY(30px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        #journal-overlay.open #journal-book {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        #journal-book img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            mix-blend-mode: screen;
+            display: block;
+        }
+
+        /* 书页上的文字层 */
+        .journal-pages {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            pointer-events: none;
+        }
+
+        /* 左页 */
+        .journal-left {
+            flex: 1;
+            padding: 10% 8% 12% 18%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 右页 */
+        .journal-right {
+            flex: 1;
+            padding: 10% 16% 12% 8%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .journal-page-title {
+            font-family: 'ZCOOL XiaoWei', serif;
+            font-size: clamp(13px, 1.8vw, 20px);
+            color: rgba(80, 55, 25, 0.90);
+            letter-spacing: 3px;
+            margin-bottom: 0.8em;
+            text-align: center;
+        }
+
+        .journal-divider {
+            width: 60%;
+            height: 1px;
+            background: rgba(100, 70, 30, 0.30);
+            margin: 0 auto 1em;
+        }
+
+        .journal-entry {
+            font-size: clamp(10px, 1.3vw, 15px);
+            color: rgba(65, 42, 18, 0.85);
+            line-height: 1.9;
+            letter-spacing: 1px;
+        }
+
+        .journal-date {
+            font-size: clamp(9px, 1.1vw, 13px);
+            color: rgba(100, 70, 30, 0.55);
+            letter-spacing: 2px;
+            margin-top: auto;
+            text-align: right;
+        }
+
+        /* 关闭提示 */
+        .journal-close-hint {
+            position: absolute;
+            bottom: -2.2em;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(180, 150, 90, 0.45);
+            letter-spacing: 3px;
+            white-space: nowrap;
+        }
+
         /* ── 入场动画 ── */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -501,6 +619,159 @@ const caveImg = document.getElementById('cave-img');
 if (caveImg.complete) positionBook();
 else caveImg.addEventListener('load', positionBook);
 window.addEventListener('resize', positionBook);
+
+/* ══════════════════════════════════════
+   桌上摧开的书——坐标跟随背景图
+   原图坐标大约：x:0.52 y:0.70 w:0.22 h:0.18
+   ══════════════════════════════════════ */
+const DESK = { x: 0.725, y: 0.7925, w: 0.067, h: 0.0275 };
+
+function positionDeskZone() {
+    const img = document.getElementById('cave-img');
+    const el  = document.getElementById('desk-book-zone');
+    if (!img || !el) return;
+    const rect  = img.getBoundingClientRect();
+    const nw    = img.naturalWidth  || IMG_W;
+    const nh    = img.naturalHeight || IMG_H;
+    const scale = Math.max(rect.width / nw, rect.height / nh);
+    const rendW = nw * scale, rendH = nh * scale;
+    const ox    = rect.left + (rect.width  - rendW) / 2;
+    const oy    = rect.top  + (rect.height - rendH) / 2;
+    el.style.left   = (ox + DESK.x * rendW) + 'px';
+    el.style.top    = (oy + DESK.y * rendH) + 'px';
+    el.style.width  = (DESK.w * rendW) + 'px';
+    el.style.height = (DESK.h * rendH) + 'px';
+}
+
+if (caveImg.complete) positionDeskZone();
+else caveImg.addEventListener('load', positionDeskZone);
+window.addEventListener('resize', positionDeskZone);
+
+/* ══════════════════════════════════════
+   日志翻页系统 —— 动态加载md
+   ══════════════════════════════════════ */
+let journalPages = [];
+let journalCurrent = 0;
+
+// 简单md转HTML（支持标题、粗体、斜体、换行）
+function mdToHtml(md) {
+    return md
+        .replace(/^## (.+)$/gm, '<div class="journal-page-title">$1</div><div class="journal-divider"></div>')
+        .replace(/^### (.+)$/gm, '<strong>$1</strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+}
+
+async function loadJournalPages() {
+    const res  = await fetch('pages/index.json');
+    journalPages = await res.json();
+}
+
+async function renderJournalPage(idx) {
+    const page = journalPages[idx];
+    if (!page) return;
+    const [leftMd, rightMd] = await Promise.all([
+        fetch('pages/' + page.left).then(r => r.text()),
+        fetch('pages/' + page.right).then(r => r.text()),
+    ]);
+    document.getElementById('journal-content-left').innerHTML  = mdToHtml(leftMd);
+    document.getElementById('journal-content-right').innerHTML = mdToHtml(rightMd);
+    // 更新翻页按钮可见性
+    document.getElementById('btn-prev').style.opacity = idx > 0 ? '1' : '0';
+    document.getElementById('btn-next').style.opacity = idx < journalPages.length - 1 ? '1' : '0';
+}
+
+async function openJournal() {
+    document.getElementById('journal-overlay').classList.add('open');
+    try {
+        if (journalPages.length === 0) await loadJournalPages();
+        await renderJournalPage(journalCurrent);
+    } catch(e) {
+        // 本地file://协论fetch被阻止，展示提示
+        document.getElementById('journal-content-left').innerHTML =
+            '<div class="journal-page-title">洞穴日志</div><div class="journal-divider"></div><div style="color:rgba(80,55,25,0.6);font-size:12px;line-height:2;">(本地预览不支持动态加载，<br>push到GitHub后正常显示)</div>';
+        document.getElementById('journal-content-right').innerHTML = '';
+    }
+}
+
+function closeJournal() {
+    document.getElementById('journal-overlay').classList.remove('open');
+}
+
+async function journalPrev() {
+    if (journalCurrent > 0) {
+        journalCurrent--;
+        await renderJournalPage(journalCurrent);
+    }
+}
+
+async function journalNext() {
+    if (journalCurrent < journalPages.length - 1) {
+        journalCurrent++;
+        await renderJournalPage(journalCurrent);
+    }
+}
+
+// ESC关闭
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeJournal();
+    if (e.key === 'ArrowLeft')  journalPrev();
+    if (e.key === 'ArrowRight') journalNext();
+});
+
+// 点击遮罩关闭
+window.addEventListener('load', function() {
+    document.getElementById('journal-overlay').addEventListener('click', function(e) {
+        const book = document.getElementById('journal-book');
+        if (!book.contains(e.target)) closeJournal();
+    });
+});
 </script>
+
+<!-- 桌上摧开的书（隐形点击区） -->
+<div class="books-layer" style="z-index:5;pointer-events:none;">
+    <div class="desk-book-zone" id="desk-book-zone" onclick="openJournal()"></div>
+</div>
+
+<!-- 日志弹窗 -->
+<div id="journal-overlay" onclick="closeJournal()">
+    <div id="journal-book" onclick="event.stopPropagation()">
+        <img src="images/book-open.png" alt="">
+        <div class="journal-pages">
+            <!-- 左页 -->
+            <div class="journal-left">
+                <div id="journal-content-left" class="journal-entry"></div>
+                <!-- 左下角翻左页按钮 -->
+                <div id="btn-prev" onclick="journalPrev()" style="
+                    position:absolute; bottom:9%; left:10%;
+                    font-size:clamp(18px,2.5vw,28px);
+                    color:rgba(80,55,25,0.45);
+                    cursor:pointer; opacity:0;
+                    transition:opacity 0.2s, color 0.2s;
+                    user-select:none;
+                " onmouseover="this.style.color='rgba(80,55,25,0.85)'"
+                   onmouseout="this.style.color='rgba(80,55,25,0.45)'">❮</div>
+            </div>
+            <!-- 右页 -->
+            <div class="journal-right">
+                <div id="journal-content-right" class="journal-entry"></div>
+                <!-- 右下角翻右页按钮 -->
+                <div id="btn-next" onclick="journalNext()" style="
+                    position:absolute; bottom:9%; right:10%;
+                    font-size:clamp(18px,2.5vw,28px);
+                    color:rgba(80,55,25,0.45);
+                    cursor:pointer; opacity:0;
+                    transition:opacity 0.2s, color 0.2s;
+                    user-select:none;
+                " onmouseover="this.style.color='rgba(80,55,25,0.85)'"
+                   onmouseout="this.style.color='rgba(80,55,25,0.45)'">❯</div>
+            </div>
+        </div>
+        <div class="journal-close-hint">点击任意处关闭</div>
+    </div>
+</div>
+
 </body>
 </html>
