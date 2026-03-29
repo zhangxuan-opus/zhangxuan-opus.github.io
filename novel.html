@@ -551,10 +551,10 @@
                     const contentRes = await fetch('chapters/' + ch.file);
                     const text = await contentRes.text();
 
-                    // 将纯文本转为HTML段落
-                    const paragraphs = text.split(/\n\s*\n/)
+                    // 将纯文本转为HTML段落（每行一个段落）
+                    const paragraphs = text.split(/\n/)
                         .filter(p => p.trim())
-                        .map(p => '<p>' + p.trim().replace(/\n/g, '<br>') + '</p>')
+                        .map(p => '<p>' + p.trim() + '</p>')
                         .join('\n');
 
                     // 生成章节HTML（复用现有CSS class）
