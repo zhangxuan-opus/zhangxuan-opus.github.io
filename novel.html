@@ -551,11 +551,21 @@
                     const contentRes = await fetch('chapters/' + ch.file);
                     const text = await contentRes.text();
 
-                    // 将纯文本转为HTML段落（每行一个段落）
-                    const paragraphs = text.split(/\n/)
-                        .filter(p => p.trim())
-                        .map(p => '<p>' + p.trim() + '</p>')
-                        .join('\n');
+                    // 将纯文本转为HTML段落（每行一个段落，连续空行产生额外间距）
+                    const lines = text.split(/\n/);
+                    let paragraphs = '';
+                    let emptyCount = 0;
+                    for (const line of lines) {
+                        if (line.trim() === '') {
+                            emptyCount++;
+                        } else {
+                            if (emptyCount >= 2) {
+                                paragraphs += '<div style="height: 1.2em;"></div>\n';
+                            }
+                            paragraphs += '<p>' + line.trim() + '</p>\n';
+                            emptyCount = 0;
+                        }
+                    }
 
                     // 生成章节HTML（复用现有CSS class）
                     const section = document.createElement('section');
